@@ -8,17 +8,20 @@ LICENSE
 ├─ README.md
 cache
 │  └─ cache.go
+|
 ├─ configs
 │  └─ config.yaml
+|
 ├─ go.mod
 ├─ go.sum
+|
 ├─ internal
-api
-handlers.go
-config
-config.go
-db
-database.go
+|  ├─ api
+|  |  └─ handlers.go
+├  ├─ config
+|  |  └─ config.go
+├  ├─ db
+|  |  └─ database.go
 │  ├─ logger
 │  │  └─ logger.go
 │  ├─ metrics
@@ -31,6 +34,7 @@ database.go
 │  │  └─ edi_service.go
 │  └─ utils
 │     └─ utils.go
+|
 ├─ main.go
 └─ pkg
    ├─ middleware
