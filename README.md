@@ -5,6 +5,8 @@ Electronic Data Interchange (EDI) system designed to streamline the exchange of 
 /edi-system
 │
 ├── main.go
+|
+|── cache.go
 │
 ├── /internal
 │   ├── /api
