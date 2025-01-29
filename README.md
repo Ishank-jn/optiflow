@@ -2,35 +2,40 @@
 Electronic Data Interchange (EDI) system designed to streamline the exchange of documents between parties.
 
 ## Architecture
-/edi-system
-│
-├── main.go
-|
-|── cache.go
-│
-├── /internal
-│   ├── /api
-│   │   └── handlers.go
-│   ├── /config
-│   │   └── config.go
-│   ├── /db
-│   │   └── database.go
-│   ├── /models
-│   │   └── edi.go
-│   ├── /services
-│   │   └── edi_service.go
-│   ├── /utils
-│   │   └── utils.go
-│   └── /oauth
-│       └── oauth.go
-│
-├── /pkg
-│   ├── /middleware
-│   │   └── auth.go
-│   └── /socket
-│       └── socket.go
-|
-|── License
-├── go.mod
-├── go.sum
-└── README.md
+```
+📦 
+LICENSE
+├─ README.md
+cache
+│  └─ cache.go
+├─ configs
+│  └─ config.yaml
+├─ go.mod
+├─ go.sum
+├─ internal
+api
+handlers.go
+config
+config.go
+db
+database.go
+│  ├─ logger
+│  │  └─ logger.go
+│  ├─ metrics
+│  │  └─ metrics.go
+│  ├─ models
+│  │  └─ edi.go
+│  ├─ oauth
+│  │  └─ oauth.go
+│  ├─ services
+│  │  └─ edi_service.go
+│  └─ utils
+│     └─ utils.go
+├─ main.go
+└─ pkg
+   ├─ middleware
+   │  ├─ auth.go
+   │  └─ rate_limiter.go
+   └─ socket
+      └─ socket.go
+```
