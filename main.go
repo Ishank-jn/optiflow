@@ -1,21 +1,31 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"optiflow/api"
-	"optiflow/config"
-	"optiflow/db"
-	"optiflow/middleware"
+	"time"
+	"optiflow/internal/api"
+	"optiflow/internal/config"
+	"optiflow/internal/db"
+	"optiflow/internal/metrics"
+	"optiflow/internal/logger"
+	"optiflow/pkg/middleware"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
+	// Initialize logger
+    logger.Init()
+
 	// Load configuration
 	cfg, err := config.LoadConfig("configs/config.yaml")
 	if err != nil {
 		log.Fatalf("Could not load config: %v", err)
 	}
+
+	// Initialize metrics
+    metrics.Init()
 
 	// Initialize database
 	dbConn, err := db.InitDB(cfg)
@@ -25,8 +35,11 @@ func main() {
 
 	// Initialize router
 	router := mux.NewRouter()
+	router.Handle("/metrics", metrics.MetricsHandler())
 
 	// Middleware
+	rl := middleware.NewRateLimiter(100, time.Minute)
+	router.Use(middleware.RateLimitMiddleware(rl))
 	router.Use(middleware.LoggingMiddleware)
 	router.Use(middleware.AuthMiddleware)
 
