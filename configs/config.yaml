@@ -10,14 +10,6 @@ database:
   password: "password" # Database password
   dbname: "edidb"   # Database name
 
-# OAuth configuration
-oauth:
-  client_id: "your-client-id"          # OAuth client ID
-  client_secret: "your-client-secret"  # OAuth client secret
-  redirect_url: "http://localhost:8080/callback" # OAuth redirect URL
-  auth_url: "https://accounts.google.com/o/oauth2/auth" # OAuth provider auth URL
-  token_url: "https://accounts.google.com/o/oauth2/token" # OAuth provider token URL
-
 # Redis configuration (for caching)
 redis:
   address: "localhost:6379" # Redis server address
@@ -38,8 +30,3 @@ logging:
 prometheus:
   enabled: true # Enable Prometheus metrics
   path: "/metrics" # Path for Prometheus metrics endpoint
-
-# Loki configuration (for log aggregation)
-loki:
-  enabled: true # Enable Loki logging
-  url: "http://localhost:3100/loki/api/v1/push" # Loki server URL

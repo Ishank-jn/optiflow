@@ -2,9 +2,9 @@ package cache
 
 import (
     "context"
-    // "fmt"
     "time"
     "github.com/go-redis/redis/v8"
+    "optiflow/internal/logger"
 )
 
 var (
@@ -13,6 +13,7 @@ var (
 )
 
 func InitRedis(addr string) error {
+    logger.Info("Initializing Redis client")
     rdb = redis.NewClient(&redis.Options{
         Addr:     addr,
         Password: "", // no password set
@@ -20,17 +21,43 @@ func InitRedis(addr string) error {
     })
 
     _, err := rdb.Ping(ctx).Result()
-    return err
+    if err != nil {
+        logger.Error("Failed to connect to Redis: " + err.Error())
+        return err
+    }
+    logger.Info("Successfully connected to Redis")
+    return nil
 }
 
 func Set(key string, value interface{}, expiration time.Duration) error {
-    return rdb.Set(ctx, key, value, expiration).Err()
+    logger.Info("Setting key: " + key)
+    err := rdb.Set(ctx, key, value, expiration).Err()
+    if err != nil {
+        logger.Error("Failed to set key: " + key + " Error: " + err.Error())
+    } else {
+        logger.Info("Successfully set key: " + key)
+    }
+    return err
 }
 
 func Get(key string) (string, error) {
-    return rdb.Get(ctx, key).Result()
+    logger.Info("Getting key: " + key)
+    result, err := rdb.Get(ctx, key).Result()
+    if err != nil {
+        logger.Error("Failed to get key: " + key + " Error: " + err.Error())
+        return "", err
+    }
+    logger.Info("Successfully got key: " + key)
+    return result, nil
 }
 
 func Delete(key string) error {
-    return rdb.Del(ctx, key).Err()
+    logger.Info("Deleting key: " + key)
+    err := rdb.Del(ctx, key).Err()
+    if err != nil {
+        logger.Error("Failed to delete key: " + key + " Error: " + err.Error())
+    } else {
+        logger.Info("Successfully deleted key: " + key)
+    }
+    return err
 }

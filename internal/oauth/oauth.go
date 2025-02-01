@@ -1,80 +1,61 @@
-package oauth
+package auth
 
 import (
-	"context"
-	"errors"
-	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/oauth2"
-	"optiflow/internal/config"
-	"time"
+    "time"
+    "errors"
+    "database/sql"
+    "github.com/golang-jwt/jwt/v5"
+    "golang.org/x/crypto/bcrypt"
 )
 
-var (
-	OAuthConfig *oauth2.Config
-	secretKey   = []byte("your_secret_key")
-)
-
-func InitOAuth(cfg *config.Config) {
-	OAuthConfig = &oauth2.Config{
-		ClientID:     cfg.OAuth.ClientID,
-		ClientSecret: cfg.OAuth.ClientSecret,
-		RedirectURL:  cfg.OAuth.RedirectURL,
-		Scopes:       []string{"read"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://accounts.google.com/o/oauth2/auth",
-			TokenURL: "https://accounts.google.com/o/oauth2/token",
-		},
-	}
+// User represents a user in the database
+type User struct {
+    ID           int    `json:"id"`
+    Username     string `json:"username"`
+    PasswordHash string `json:"-"`
+    Email        string `json:"email"`
 }
 
-// GetOAuthURL generates the OAuth 2.0 authorization URL
-func GetOAuthURL() string {
-	return OAuthConfig.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
+// Claims represents the JWT claims
+type Claims struct {
+    UserID   int    `json:"user_id"`
+    Username string `json:"username"`
+    jwt.RegisteredClaims
 }
 
-// ExchangeCodeForToken exchanges the authorization code for an access token
-func ExchangeCodeForToken(code string) (*oauth2.Token, error) {
-	return OAuthConfig.Exchange(context.Background(), code)
+// GenerateToken generates a JWT token for a user
+func GenerateToken(user *User, secretKey string, expiration time.Duration) (string, error) {
+    claims := &Claims{
+        UserID:   user.ID,
+        Username: user.Username,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiration)),
+            IssuedAt:  jwt.NewNumericDate(time.Now()),
+            Issuer:    "edi-system",
+        },
+    }
+
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString([]byte(secretKey))
 }
 
-// GenerateToken generates a new JWT token
-func GenerateToken(userID string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 1).Unix(),
-	})
+// ValidateCredentials validates a user's credentials against the database
+func ValidateCredentials(db *sql.DB, username, password string) (*User, error) {
+    var user User
+    query := `SELECT id, username, password_hash, email FROM users WHERE username = $1`
+    row := db.QueryRow(query, username)
+    err := row.Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Email)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, errors.New("user not found")
+        }
+        return nil, err
+    }
 
-	// Sign the token with the secret key
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
+    // Compare the provided password with the hashed password
+    if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+        return nil, errors.New("invalid password")
+    }
 
-	return tokenString, nil
-}
-
-// ValidateToken validates the JWT token
-func ValidateToken(tokenString string) (bool, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Ensure the signing method is HMAC
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return secretKey, nil
-	})
-
-	if err != nil {
-		return false, err
-	}
-
-	// Check if the token is valid
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		exp := int64(claims["exp"].(float64))
-		if exp < time.Now().Unix() {
-			return false, errors.New("token has expired")
-		}
-		return true, nil
-	}
-
-	return false, errors.New("invalid token")
+    return &user, nil
 }

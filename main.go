@@ -23,6 +23,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not load config: %v", err)
 	}
+	logger.Info("Configuration loaded successfully")
 
 	// Initialize metrics
     metrics.Init()
@@ -32,6 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not initialize database: %v", err)
 	}
+	logger.Info("Database initialized successfully")
 
 	// Initialize router
 	router := mux.NewRouter()
@@ -41,7 +43,8 @@ func main() {
 	rl := middleware.NewRateLimiter(100, time.Minute)
 	router.Use(middleware.RateLimitMiddleware(rl))
 	router.Use(middleware.LoggingMiddleware)
-	router.Use(middleware.AuthMiddleware)
+    router.Use(middleware.AuthMiddleware(cfg.JWT.SecretKey))
+
 
 	// API Handlers
 	api.SetupRoutes(router, dbConn)
